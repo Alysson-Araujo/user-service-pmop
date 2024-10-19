@@ -4,10 +4,11 @@ package com.microorderplatform.userservice.controllers;
 import com.microorderplatform.userservice.dtos.user.AuthenticationDTO;
 import com.microorderplatform.userservice.dtos.user.CreateUserDTO;
 import com.microorderplatform.userservice.dtos.user.CreateUserResponse;
+import com.microorderplatform.userservice.dtos.user.LoginResponseDTO;
+import com.microorderplatform.userservice.infra.security.TokenService;
 import com.microorderplatform.userservice.models.UserModel;
 import com.microorderplatform.userservice.services.UserService;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.beans.Beans;
 
 @RestController
 @RequestMapping("auth")
@@ -31,11 +31,16 @@ public class AuthenticatorController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private TokenService tokenService;
+
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid AuthenticationDTO authenticationDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO authenticationDTO) {
+
         var login = new UsernamePasswordAuthenticationToken(authenticationDTO.email(), authenticationDTO.password());
         var auth = this.authenticationManager.authenticate(login);
-        return ResponseEntity.ok(auth);
+        var token = tokenService.generateToken((UserModel) auth.getPrincipal());
+        return ResponseEntity.ok(new LoginResponseDTO(token));
     }
 
     @PostMapping("/register")
